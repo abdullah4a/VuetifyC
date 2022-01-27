@@ -3,14 +3,15 @@
     <v-sheet>
       <v-calendar
           ref="calendar"
+          class="v-current-time"
           v-model="value"
           color="primary"
           type="4day"
+          :categories="categories"
           :events="events"
           :event-color="getEventColor"
           :event-ripple="false"
           @change="getEvents"
-          categories="Sufyan Khan"
           @mousedown:event="startDrag"
           @mousedown:time="startTime"
           @mousemove:time="mouseMove"
@@ -18,6 +19,8 @@
           @mouseleave.native="cancelDrag"
       >
         <template v-slot:event="{ event, timed, eventSummary }">
+
+
           <div
               class="v-event-draggable"
               v-html="eventSummary()"
@@ -30,13 +33,29 @@
         </template>
       </v-calendar>
     </v-sheet>
+    <v-dialog
+        v-model="dialog"
+        hide-overlay
+        transition="dialog-bottom-transition"
+    >
+      <v-card>
+        <v-card-title>
+          Hello from Card
+        </v-card-title>
+        <v-card-text>
+          <v-text-field v-model="events.eventSummary" label="Title"></v-text-field>
+        </v-card-text>
+      </v-card>
+
+    </v-dialog>
   </v-app>
 </template>
 <script>
 export default {
   data: () => ({
+    dialog: false,
     value: '',
-    events: [],
+    events: [{event: '', timed: '', eventSummary: ''}],
     colors: ['#2196F3', '#3F51B5', '#673AB7', '#00BCD4', '#4CAF50', '#FF9800', '#757575'],
     names: ['Meeting', 'Holiday', 'PTO', 'Travel', 'Event', 'Birthday', 'Conference', 'Party'],
     dragEvent: null,
@@ -44,16 +63,17 @@ export default {
     createEvent: null,
     createStart: null,
     extendOriginal: null,
+    categories: ["Sufyan Khan"]
   }),
   methods: {
-    startDrag ({ event, timed }) {
+    startDrag({event, timed}) {
       if (event && timed) {
         this.dragEvent = event
         this.dragTime = null
         this.extendOriginal = null
       }
     },
-    startTime (tms) {
+    startTime(tms) {
       const mouse = this.toTime(tms)
 
       if (this.dragEvent && this.dragTime === null) {
@@ -73,12 +93,12 @@ export default {
         this.events.push(this.createEvent)
       }
     },
-    extendBottom (event) {
+    extendBottom(event) {
       this.createEvent = event
       this.createStart = event.start
       this.extendOriginal = event.end
     },
-    mouseMove (tms) {
+    mouseMove(tms) {
       const mouse = this.toTime(tms)
 
       if (this.dragEvent && this.dragTime !== null) {
@@ -100,14 +120,15 @@ export default {
         this.createEvent.end = max
       }
     },
-    endDrag () {
+    endDrag() {
+      this.dialog = true
       this.dragTime = null
       this.dragEvent = null
       this.createEvent = null
       this.createStart = null
       this.extendOriginal = null
     },
-    cancelDrag () {
+    cancelDrag() {
       if (this.createEvent) {
         if (this.extendOriginal) {
           this.createEvent.end = this.extendOriginal
@@ -124,7 +145,7 @@ export default {
       this.dragTime = null
       this.dragEvent = null
     },
-    roundTime (time, down = true) {
+    roundTime(time, down = true) {
       const roundTo = 15 // minutes
       const roundDownTime = roundTo * 60 * 1000
 
@@ -132,10 +153,10 @@ export default {
           ? time - time % roundDownTime
           : time + (roundDownTime - (time % roundDownTime))
     },
-    toTime (tms) {
+    toTime(tms) {
       return new Date(tms.year, tms.month - 1, tms.day, tms.hour, tms.minute).getTime()
     },
-    getEventColor (event) {
+    getEventColor(event) {
       const rgb = parseInt(event.color.substring(1), 16)
       const r = (rgb >> 16) & 0xFF
       const g = (rgb >> 8) & 0xFF
@@ -147,7 +168,7 @@ export default {
               ? `rgba(${r}, ${g}, ${b}, 0.7)`
               : event.color
     },
-    getEvents ({ start, end }) {
+    getEvents({start, end}) {
       const events = []
 
       const min = new Date(`${start.date}T00:00:00`).getTime()
@@ -173,10 +194,10 @@ export default {
 
       this.events = events
     },
-    rnd (a, b) {
+    rnd(a, b) {
       return Math.floor((b - a + 1) * Math.random()) + a
     },
-    rndElement (arr) {
+    rndElement(arr) {
       return arr[this.rnd(0, arr.length - 1)]
     },
   },
